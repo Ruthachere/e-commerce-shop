@@ -26,7 +26,7 @@ export const register = async (req: Request, res: Response) => {
     });
 
     if (existing) {
-      console.warn("⚠️ User already exists:", { email, username });
+      console.warn(" User already exists:", { email, username });
       return res.status(400).json({ message: "User already exists" });
     }
 
@@ -64,12 +64,12 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
-  const { username, email, password } = req.body;
+  const { email, password } = req.body;
 
   try {
     const user = await prisma.user.findFirst({
       where: {
-        OR: [{ email }, { username }],
+        OR: [{ email} ],
       },
     });
 

@@ -4,7 +4,7 @@ import { stripe } from "../utils/stripe";
 import { logger } from "../utils/logger";
 import { paymentQueue } from "../queues/order.queue";
 
-// 🧩 Map payment → order status
+//  Map payment → order status
 const paymentToOrderStatus: Record<string, string> = {
   Completed: "Pending", // Order ready for fulfillment
   Failed: "Cancelled",
@@ -64,7 +64,7 @@ export const getPaymentById = async (req: Request, res: Response) => {
 // ✅ POST /payments
 // ================================================
 export const createPayment = async (req: Request, res: Response) => {
-  console.log("💳 POST /payments request received:", req.body);
+  console.log(" POST /payments request received:", req.body);
   const { orderId, paymentMethod, amount } = req.body;
 
   try {
@@ -74,7 +74,7 @@ export const createPayment = async (req: Request, res: Response) => {
 
     const existing = await prisma.payment.findUnique({ where: { orderId } });
     if (existing) {
-      console.error("❌ Payment already exists for order:", orderId);
+      console.error(" Payment already exists for order:", orderId);
       return res
         .status(400)
         .json({ message: "Payment for this order already exists" });

@@ -25,23 +25,44 @@ import { requestLogger } from "./middlewares/requestLogger.middleware";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
 import "./queues/reportScheduler";
 import "./workers/report.worker";
-
 import "./workers/orderWorkers";
 import "./workers/userWorker";
 import "./workers/paymentWorker";
-
-
 import http from "http";
 import { Server } from "socket.io";
+import metricsClient from "./monitoring/metrics";
+import { metricsMiddleware } from "./middlewares/metricsMiddleware";
+import { requestId } from "./middlewares/requestId";
+import { loggerMonitor } from "./utils/logger";
 
 // Initialize Express app
 const app = express();
 const PORT = 5000;
-// const server = http.createServer(app);
-// const io = new Server(server, { cors: { origin: "*" } });
+
+app.use(requestId());
+app.use(metricsMiddleware("api-server"));
+
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", metricsClient.register.contentType);
+  res.send(await metricsClient.register.metrics());
+});
+
+app.use(
+  (
+    err: any,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    loggerMonitor.error(
+      { err, reqId: (req as any).reqId, path: req.path },
+      "unhandled error"
+    );
+    res.status(err.status || 500).json({ message: "Internal error" });
+  }
+);
 
 const server = http.createServer(app);
-
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000", // your React or Next.js frontend URL
@@ -174,12 +195,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-// reportQueue.add(
-//   "generateSalesReport",
-//   {},
-//   { repeat: { pattern: "0 8 * * *" } } // 8:00 AM every day
-// );
-//
+
 // ─── START SERVER ──────────────────────────────────────────────────────
 //
 

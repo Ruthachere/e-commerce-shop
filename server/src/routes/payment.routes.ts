@@ -14,15 +14,19 @@ import {
 import { validateRequest } from "../middlewares/validation.middleware";
 import { audit } from "../middlewares/audit.middleware";
 import { authenticate } from "../middlewares/authenticate.middleware";
+import calculatePricing from "../middlewares/calculate.middleware";
 
 const router = Router();
 
 // Admin only
 router.get("/", getAllPayments);
-router.post("/create-checkout-session", createCheckoutSession);
+router.post(
+  "/create-checkout-session",
+  createCheckoutSession
+);
 router.put(
   "/:id",
-  // authenticate(["Admin"]),
+  authenticate(["Admin"]),
   audit("UPDATE_PAYMENT", "Payment"),
   updatePaymentStatusDTO,
   validateRequest,
@@ -33,7 +37,7 @@ router.put(
 router.get("/:id", getPaymentByIdDTO, validateRequest, getPaymentById);
 router.post(
   "/",
-  // authenticate(["Admin"]),
+  
   audit("CREATE_PAYMENT", "Payment"),
   createPaymentDTO,
   validateRequest,

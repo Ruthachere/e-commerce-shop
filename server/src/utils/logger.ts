@@ -25,12 +25,12 @@ const consoleFormat = format.combine(
 export const logger = createLogger({
   level: "info", // Global level
   transports: [
-    // ✅ Logs to console (dev-friendly)
+    //  Logs to console (dev-friendly)
     new transports.Console({
       format: consoleFormat,
     }),
 
-    // ✅ Logs to file (structured logs)
+    //  Logs to file (structured logs)
     new transports.File({
       filename: path.join(logDir, "error.log"),
       level: "error",
@@ -44,3 +44,7 @@ export const logger = createLogger({
     }),
   ],
 });
+
+
+import pino from "pino";
+export const loggerMonitor = pino({ level: process.env.LOG_LEVEL ?? "info" });

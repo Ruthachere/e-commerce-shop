@@ -17,7 +17,7 @@ router.post(
   validateRequest,
   register
 );
-router.post("/login", loginRateLimiter, loginDTO, validateRequest, login);
+router.post("/login",  loginDTO, validateRequest, login);
 router.post("/refresh", refreshToken);
-
+loginRateLimiter
 export default router;
