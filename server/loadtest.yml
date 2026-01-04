@@ -1,0 +1,91 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 60
+      arrivalRate: 2
+      name: Warm up
+    - duration: 120
+      arrivalRate: 5
+      name: Ramp up
+    - duration: 180
+      arrivalRate: 10
+      name: Sustained load
+
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+  variables:
+    email: "test@example.com"
+    password: "password123"
+
+scenarios:
+  # 1️⃣ Login & Browse Products
+  - name: Login and Browse Products
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.accessToken"
+              as: token
+      - log: "✅ User logged in with token: {{ token }}"
+      - think: 1
+
+      - get:
+          url: "/api/products"
+          headers:
+            Authorization: "Bearer {{ token }}"
+      - think: 2
+
+  # 2️⃣ Checkout flow (simulate purchase)
+  - name: Create Checkout Session
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: token
+      - think: 1
+      - post:
+          url: "/api/payment/create-checkout-session"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            items:
+              - productId: 1
+                quantity: 2
+            paymentMethod: "card"
+      - think: 2
+
+  # 3️⃣ Inventory Updates (admin simulation)
+  - name: Inventory Updates
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: token
+      - think: 1
+      - put:
+          url: "/api/inventory/1"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            quantity: 80
+      - think: 1
+      - put:
+          url: "/api/inventory/2"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            quantity: 120
+      - think: 1

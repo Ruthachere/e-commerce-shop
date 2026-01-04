@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  username    String
+  password    String
+  email       String
+  firstName   String
+  lastName    String
+  role        Role     @default(Basic)
+  phoneNumber Int
+  createdAt   DateTime @default(now())
+
+  orders   Order[]
+  AuditLog AuditLog[]
+
+  @@unique([username, email])
+  @@index([email])
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String
+  products Product[]
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String
+  price       Decimal
+  imageurl    String
+  updatedAt   DateTime    @updatedAt
+  categoryId  Int
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+  variants    Variant[]
+}
+
+model Variant {
+  id         Int         @id @default(autoincrement())
+  sku        String      @unique
+  color      String?
+  size       String?
+  price      Decimal
+  productId  Int
+  product    Product     @relation(fields: [productId], references: [id])
+  inventory  Inventory?
+  orderItems OrderItem[]
+}
+
+model Inventory {
+  id            Int      @id @default(autoincrement())
+  updatedAt     DateTime @updatedAt
+  quantity      Int
+  variantId     Int      @unique
+  minStockLevel Int      @default(5)
+  variant       Variant  @relation(fields: [variantId], references: [id])
+}
+
+model Order {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id])
+  orderDate       DateTime
+  discount        Float    @default(0.0)
+  tax             Float    @default(0.0)
+  shipping        Float    @default(0.0)
+  total           Float    @default(0.0)
+  totalAmount     Decimal
+  status          Status   @default(Pending)
+  shippingCity    String
+  shippingState   String
+  shippingCountry String
+  shippingMethod  String
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  orderItems OrderItem[]
+  payment    Payment?
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  variantId Int
+  quantity  Int
+  price     Decimal
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  variant Variant @relation(fields: [variantId], references: [id])
+}
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  orderId       Int           @unique
+  paymentDate   DateTime
+  paymentMethod String
+  status        paymentStatus @default(Pending)
+  amount        Decimal
+
+  order Order @relation(fields: [orderId], references: [id])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String // e.g. "CREATE_PRODUCT"
+  entity    String // e.g. "Product"
+  entityId  Int? // ID of the affected entity
+  changes   Json? // full object or partial updates
+  ipAddress String? // IP address of the requester
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  Basic
+  Admin
+}
+
+enum Status {
+  Pending
+  Shipped
+  Delivered
+  Cancelled
+}
+
+enum paymentStatus {
+  Pending
+  Completed
+  Failed
+}
